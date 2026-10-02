@@ -132,7 +132,7 @@ To change the schedule, edit the cron line in [`.github/workflows/digest.yml`](.
 <details>
 <summary>Do I need an API key?</summary>
 
-No. Keyword scoring works without an AI key. For semantic ranking and concise scientific summaries in this fork, add a Google AI Studio API key as the `GEMINI_API_KEY` repository secret. Gemini's free tier has account-specific rate limits; check your limits in AI Studio. The main workflow does not pass `OPENAI_API_KEY`.
+No. Keyword scoring works without an AI key. For semantic ranking and concise scientific summaries in this fork, add a Google AI Studio API key as the `GEMINI_API_KEY` repository secret. The fork uses `gemini-3.5-flash-lite` by default; you can change `gemini_api_model` in `config.yaml`. Gemini's free tier has account-specific rate limits; check your limits in AI Studio. The main workflow does not pass `OPENAI_API_KEY`.
 
 </details>
 

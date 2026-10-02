@@ -65,7 +65,7 @@ CONFIG_EXAMPLE_PATH = Path(__file__).parent / "config.example.yaml"
 STATS_PATH = Path(__file__).parent / "keyword_stats.json"
 FEEDBACK_STATS_PATH = Path(__file__).parent / "feedback_stats.json"
 VERTEX_GEMINI_MODEL = "gemini-2.5-flash"
-GEMINI_API_MODEL = "gemini-2.5-flash"
+GEMINI_API_MODEL = "gemini-3.5-flash-lite"
 
 
 def _read_yaml() -> dict[str, Any]:
@@ -1335,7 +1335,7 @@ def _analyse_with_gemini_api(papers: list[dict[str, Any]], config: dict[str, Any
 
         try:
             response = client.models.generate_content(
-                model=GEMINI_API_MODEL,
+                model=config.get("gemini_api_model", GEMINI_API_MODEL),
                 contents=prompt,
                 config={
                     "response_mime_type": "application/json",
@@ -1964,7 +1964,7 @@ def _render_scoring_notice(scoring_method: str) -> str:
         return f"""
   <tr><td style="padding:12px 44px">
     <div style="background:{PINE_WASH};border:1px solid {CARD_BORDER};border-radius:6px;padding:14px 18px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:{WARM_GREY};text-align:center">
-      &#x1F916; Papers scored by <strong>Gemini 2.5 Flash ({label})</strong>.
+      &#x1F916; Papers scored by <strong>Gemini ({label})</strong>.
     </div>
   </td></tr>"""
     elif scoring_method == "keywords_fallback":
@@ -2082,7 +2082,7 @@ def _render_student_footer(config: dict[str, Any], scoring_method: str) -> str:
         "openai": "OpenAI",
         "claude": "Claude Haiku (Anthropic)",
         "vertex_gemini": "Gemini 2.0 Flash (Vertex AI / GCP)",
-        "gemini_api": "Gemini 2.5 Flash (Google AI)",
+        "gemini_api": "Gemini (Google AI)",
         "keywords": "keyword matching",
         "keywords_fallback": "keyword matching (AI unavailable)",
         "none": "AI",
@@ -2155,7 +2155,7 @@ def _render_footer(config: dict[str, Any], scoring_method: str) -> str:
         "openai": "OpenAI",
         "claude": "Claude Haiku (Anthropic)",
         "vertex_gemini": "Gemini 2.0 Flash (Vertex AI / GCP)",
-        "gemini_api": "Gemini 2.5 Flash (Google AI)",
+        "gemini_api": "Gemini (Google AI)",
         "keywords": "keyword matching",
         "keywords_fallback": "keyword matching (AI unavailable)",
         "none": "AI",

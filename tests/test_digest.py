@@ -1290,7 +1290,7 @@ class TestAnalysePapersCascade:
     def test_gemini_helpers_use_current_model_ids(self):
         """Regression guard for retired/blocked Gemini model aliases."""
         assert d.VERTEX_GEMINI_MODEL == "gemini-2.5-flash"
-        assert d.GEMINI_API_MODEL == "gemini-2.5-flash"
+        assert d.GEMINI_API_MODEL == "gemini-3.5-flash-lite"
 
     def test_gemini_api_uses_structured_output(self):
         """Google AI must return the renderer's complete analysis contract."""
@@ -1317,6 +1317,7 @@ class TestAnalysePapersCascade:
             "response_mime_type": "application/json",
             "response_schema": d.PaperAnalysis,
         }
+        assert client.models.generate_content.call_args.kwargs["model"] == "gemini-3.5-flash-lite"
 
     def test_all_ai_fails_falls_back_to_keywords(self):
         """When all AI tiers fail, should cascade to keyword fallback."""
