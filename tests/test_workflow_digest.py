@@ -33,16 +33,17 @@ def test_digest_workflow_requires_a_real_email_delivery_method():
     assert 'elif [ -n "$DIGEST_RELAY_TOKEN" ]; then' in script
     assert "Relay token found — sending through shared relay" in script
     assert "No email delivery method configured." in script
-    assert "No OpenAI key configured — using keyword fallback" in script
+    assert "No Gemini key configured — using keyword fallback" in script
 
 
-def test_digest_workflow_uses_openai_and_weekday_schedule_without_gcp_auth():
+def test_digest_workflow_uses_gemini_and_weekday_schedule_without_gcp_auth():
     workflow = _load_workflow()
     run_step = _step_by_name(workflow, "Run digest")
     steps = workflow["jobs"]["send-digest"]["steps"]
 
     triggers = workflow.get("on", workflow.get(True))  # PyYAML 1.1 parses `on` as bool
     assert triggers["schedule"][0]["cron"] == "0 13 * * 1-5"
-    assert run_step["env"]["OPENAI_API_KEY"] == "${{ secrets.OPENAI_API_KEY }}"
+    assert run_step["env"]["GEMINI_API_KEY"] == "${{ secrets.GEMINI_API_KEY }}"
+    assert "OPENAI_API_KEY" not in run_step["env"]
     assert "workflow_dispatch" in triggers
     assert all(step.get("name") != "Authenticate to Google Cloud" for step in steps)

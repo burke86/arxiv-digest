@@ -1292,6 +1292,32 @@ class TestAnalysePapersCascade:
         assert d.VERTEX_GEMINI_MODEL == "gemini-2.5-flash"
         assert d.GEMINI_API_MODEL == "gemini-2.5-flash"
 
+    def test_gemini_api_uses_structured_output(self):
+        """Google AI must return the renderer's complete analysis contract."""
+        config = make_config(min_score=1, max_papers=10, gemini_request_interval_seconds=0)
+        paper = make_paper(keyword_hits=50.0)
+        analysis = d.PaperAnalysis(
+            relevance_score=8, plain_summary="A concise scientific result.",
+            why_interesting="Relevant to variability research.", emoji="🔭",
+            highlight_phrase="Variability result", kw_tags=["AGN"],
+            method_tags=["time series"], is_new_catalog=False,
+            cite_worthy=True, new_result="A measured lag.",
+        )
+        client = MagicMock()
+        client.models.generate_content.return_value.text = analysis.model_dump_json()
+
+        with patch.object(d.google_genai, "Client", return_value=client):
+            result, error = d._analyse_with_gemini_api([paper], config, "test-key")
+
+        assert error is None
+        assert result[0]["plain_summary"] == analysis.plain_summary
+        assert result[0]["why_interesting"] == analysis.why_interesting
+        assert result[0]["relevance_score"] == 8
+        assert client.models.generate_content.call_args.kwargs["config"] == {
+            "response_mime_type": "application/json",
+            "response_schema": d.PaperAnalysis,
+        }
+
     def test_all_ai_fails_falls_back_to_keywords(self):
         """When all AI tiers fail, should cascade to keyword fallback."""
         config = make_config(min_score=1, max_papers=10)

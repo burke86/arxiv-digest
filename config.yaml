@@ -95,6 +95,7 @@ discovery_candidates: 8
 openai_model: "gpt-5.6-luna"
 own_api_key: true
 enable_vertex_gemini: false
+gemini_request_interval_seconds: 12
 
 schedule: "weekdays"
 send_hour_utc: 13

@@ -13,15 +13,8 @@ permissions:
 jobs:
   send-digest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Stagger scheduled runs
-        if: github.event_name == 'schedule'
-        run: |
-          DELAY=$((RANDOM % 900))
-          echo "Waiting ${DELAY}s to spread API load across forks..."
-          sleep $DELAY
-
       - name: Checkout repository
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5
 
@@ -57,13 +50,13 @@ jobs:
             echo "   Add DIGEST_RELAY_TOKEN for relay delivery, or SMTP_USER and SMTP_PASSWORD to send directly."
             exit 1
           fi
-          if [ -n "$OPENAI_API_KEY" ]; then
-            echo "OpenAI API key found"
+          if [ -n "$GEMINI_API_KEY" ]; then
+            echo "Gemini API key found"
           else
-            echo "No OpenAI key configured — using keyword fallback (this is fine)"
+            echo "No Gemini key configured — using keyword fallback"
           fi
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DIGEST_RELAY_TOKEN: ${{ secrets.DIGEST_RELAY_TOKEN }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
@@ -73,7 +66,7 @@ jobs:
 
       - name: Run digest
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DIGEST_RELAY_TOKEN: ${{ secrets.DIGEST_RELAY_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}

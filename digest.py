@@ -1325,8 +1325,11 @@ def _analyse_with_gemini_api(papers: list[dict[str, Any]], config: dict[str, Any
     client = google_genai.Client(api_key=api_key)
     analysed = []
     consecutive_failures = 0
+    interval = max(0, float(config.get("gemini_request_interval_seconds", 0)))
 
-    def process_paper(i: int, paper: dict[str, Any]) -> tuple[dict[str, Any], Exception | None]:
+    for i, paper in enumerate(papers):
+        if i and interval:
+            time.sleep(interval)
         print(f"  Analysing {i+1}/{len(papers)}: {paper['title'][:60]}...")
         prompt = _build_scoring_prompt(paper, config)
 
@@ -1334,34 +1337,23 @@ def _analyse_with_gemini_api(papers: list[dict[str, Any]], config: dict[str, Any
             response = client.models.generate_content(
                 model=GEMINI_API_MODEL,
                 contents=prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_schema": PaperAnalysis,
+                },
             )
-            text = response.text.strip()
-            if text.startswith("```"):
-                text = re.sub(r"^```[a-z]*\n?", "", text)
-                text = re.sub(r"\n?```$", "", text)
-            analysis = json.loads(text)
-            paper.update(analysis)
-            print(f"    → score: {analysis.get('relevance_score', '?')}")
-            return paper, None
+            analysis = PaperAnalysis.model_validate_json(response.text)
+            paper.update(analysis.model_dump())
+            print(f"    → score: {analysis.relevance_score}")
+            consecutive_failures = 0
         except Exception as e:
             print(f"    Error: {e}")
             paper.update(_default_analysis(paper))
-            return paper, e
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        futures = [executor.submit(process_paper, i, paper) for i, paper in enumerate(papers)]
-        for future in futures:
-            paper, error = future.result()
-            analysed.append(paper)
-
-            if error:
-                consecutive_failures += 1
-                if consecutive_failures >= 3:
-                    print("  ⚠️  3 consecutive Gemini API failures — switching to fallback...")
-                    executor.shutdown(wait=False, cancel_futures=True)
-                    return None, "gemini_api_errors"
-            else:
-                consecutive_failures = 0
+            consecutive_failures += 1
+            if consecutive_failures >= 3:
+                print("  ⚠️  3 consecutive Gemini API failures — switching to fallback...")
+                return None, "gemini_api_errors"
+        analysed.append(paper)
 
     return _filter_and_sort(analysed, config), None
 
@@ -1972,7 +1964,7 @@ def _render_scoring_notice(scoring_method: str) -> str:
         return f"""
   <tr><td style="padding:12px 44px">
     <div style="background:{PINE_WASH};border:1px solid {CARD_BORDER};border-radius:6px;padding:14px 18px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:{WARM_GREY};text-align:center">
-      &#x1F916; Papers scored by <strong>Gemini 2.0 Flash ({label})</strong>. High-quality AI scoring via Google Cloud.
+      &#x1F916; Papers scored by <strong>Gemini 2.5 Flash ({label})</strong>.
     </div>
   </td></tr>"""
     elif scoring_method == "keywords_fallback":
@@ -1986,7 +1978,7 @@ def _render_scoring_notice(scoring_method: str) -> str:
         return f"""
     <tr><td style="padding:12px 44px">
         <div style="background:{PINE_WASH};border:1px solid {CARD_BORDER};border-radius:6px;padding:14px 18px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:{WARM_GREY};text-align:center">
-            &#x1F4CA; Papers scored by keyword matching (no AI key configured). For smarter scoring, add <code>OPENAI_API_KEY</code> to your repository secrets.
+            &#x1F4CA; Papers scored by keyword matching (no AI key configured). For smarter scoring, add an AI provider key to your repository secrets.
         </div>
     </td></tr>"""
     return ""
@@ -2090,7 +2082,7 @@ def _render_student_footer(config: dict[str, Any], scoring_method: str) -> str:
         "openai": "OpenAI",
         "claude": "Claude Haiku (Anthropic)",
         "vertex_gemini": "Gemini 2.0 Flash (Vertex AI / GCP)",
-        "gemini_api": "Gemini 2.0 Flash (Google AI)",
+        "gemini_api": "Gemini 2.5 Flash (Google AI)",
         "keywords": "keyword matching",
         "keywords_fallback": "keyword matching (AI unavailable)",
         "none": "AI",
@@ -2163,7 +2155,7 @@ def _render_footer(config: dict[str, Any], scoring_method: str) -> str:
         "openai": "OpenAI",
         "claude": "Claude Haiku (Anthropic)",
         "vertex_gemini": "Gemini 2.0 Flash (Vertex AI / GCP)",
-        "gemini_api": "Gemini 2.0 Flash (Google AI)",
+        "gemini_api": "Gemini 2.5 Flash (Google AI)",
         "keywords": "keyword matching",
         "keywords_fallback": "keyword matching (AI unavailable)",
         "none": "AI",

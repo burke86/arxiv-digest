@@ -59,10 +59,10 @@ Go to your fork → **Settings → Secrets and variables → Actions → New rep
 | Secret name | What to put there | Required? |
 |---|---|---|
 | `RECIPIENT_EMAIL` | Your email address | Yes |
-| `OPENAI_API_KEY` | Your OpenAI API key for relevance scoring and structured summaries | Recommended |
+| `GEMINI_API_KEY` | A Google AI Studio API key for Gemini relevance scoring and structured summaries ([create one here](https://aistudio.google.com/apikey)) | Recommended for this fork |
 | `DIGEST_RELAY_TOKEN` | If you got an access code from a colleague: enter it in the setup wizard's Access Code button — the token appears automatically. No access code? Skip this row and use Option B (your own email) instead. | Option A |
 | `SMTP_USER` + `SMTP_PASSWORD` | Your email address + an app password (a special one-time password your email provider generates so you don't expose your real password). **Gmail users:** You need 2-Step Verification enabled first — [enable it here](https://myaccount.google.com/signinoptions/two-step-verification). Then [generate an app password](https://myaccount.google.com/apppasswords). **Outlook users:** also add `smtp_server: "smtp.office365.com"` to your config.yaml. | Option B |
-| `GEMINI_API_KEY` | Optional upstream-compatible Gemini fallback | Optional |
+| `OPENAI_API_KEY` | Optional for custom workflows; the main digest workflow does not pass this secret | Optional |
 | `ANTHROPIC_API_KEY` | Optional upstream-compatible Claude fallback | Optional |
 
 Finally, go to the **Actions** tab in your fork, enable workflows when prompted, then click **arXiv Digest → Run workflow** to send your first digest. After that, it runs automatically on the schedule you set.
@@ -100,8 +100,8 @@ If AI is unavailable, the system cascades automatically through fallback tiers:
 
 | Tier | Provider | When it's used |
 |------|----------|----------------|
-| 1 | OpenAI | If you add `OPENAI_API_KEY` |
-| 2 | Claude / Gemini | If you retain and configure an upstream provider |
+| 1 | Gemini | This fork's main workflow passes `GEMINI_API_KEY` |
+| 2 | Other providers | Available in custom workflows if configured |
 | 3 | Keywords only | Always — no key needed |
 
 If one tier fails, the next takes over. You always get a digest. The AI keys are entirely optional — keyword scoring works well on its own, especially once you tune your keyword weights.
@@ -132,7 +132,7 @@ To change the schedule, edit the cron line in [`.github/workflows/digest.yml`](.
 <details>
 <summary>Do I need an API key?</summary>
 
-No. Keyword scoring works without an AI key. For semantic ranking and concise scientific summaries, add an OpenAI API key as the `OPENAI_API_KEY` repository secret.
+No. Keyword scoring works without an AI key. For semantic ranking and concise scientific summaries in this fork, add a Google AI Studio API key as the `GEMINI_API_KEY` repository secret. Gemini's free tier has account-specific rate limits; check your limits in AI Studio. The main workflow does not pass `OPENAI_API_KEY`.
 
 </details>
 
