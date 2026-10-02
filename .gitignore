@@ -1,10 +1,10 @@
 digest_output.html
 subscribers.json
+subscriptions.json
 **/__pycache__/
 *.pyc
 .env
 .env.*
-config.yaml
 .coverage
 .pytest_cache/
 .DS_Store

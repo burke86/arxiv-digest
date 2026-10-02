@@ -1,0 +1,109 @@
+digest_name: "Colin's Astronomy arXiv Digest"
+researcher_name: "Colin Burke"
+
+research_context: |
+  Colin Burke studies quasars and active galactic nuclei, especially optical and UV
+  variability, structure functions, damped-random-walk and related stochastic
+  time-series models, accretion disks and disk-corona coupling, extreme variability
+  quasars, changing-look AGN, Eddington ratios, and black-hole accretion physics.
+  Core interests also include quasar X-ray properties (photon index and alpha_OX),
+  reverberation mapping and continuum/inter-band lags, AGN host galaxies and selection
+  effects, and intermediate-mass black holes and black-hole occupation fractions.
+  Rank work on quasars as cosmological distance indicators, Hubble diagrams, H0,
+  dark energy, and w0-wa cosmology highly when it connects to AGN standardisation or
+  observational systematics. Also surface unusually important or closely related work
+  on strong lensing, galaxy clusters and substructure, subhalo mass functions,
+  self-interacting dark matter, lens-model systematics, Little Red Dots and compact
+  high-redshift red AGN, Rubin/LSST time-domain science, DESI, and major surveys.
+  Judge scientific relevance semantically rather than requiring literal keyword
+  overlap, and allow genuinely novel adjacent work to rank highly.
+
+categories:
+  - astro-ph.GA
+  - astro-ph.HE
+  - astro-ph.CO
+  - astro-ph.IM
+
+keywords:
+  quasar: 10
+  active galactic nucleus: 10
+  AGN variability: 10
+  changing-look AGN: 10
+  extreme variability quasar: 10
+  structure function: 9
+  damped random walk: 9
+  stochastic variability: 9
+  accretion disk: 9
+  disk-corona coupling: 9
+  Eddington ratio: 9
+  alpha_OX: 9
+  photon index: 8
+  reverberation mapping: 9
+  continuum lag: 9
+  inter-band lag: 9
+  quasar cosmology: 9
+  Hubble diagram: 8
+  Hubble constant: 8
+  dark energy: 7
+  w0-wa: 7
+  AGN host galaxy: 8
+  selection effects: 7
+  intermediate-mass black hole: 9
+  black-hole occupation fraction: 9
+  strong gravitational lensing: 7
+  galaxy cluster: 6
+  cluster substructure: 7
+  subhalo mass function: 7
+  self-interacting dark matter: 7
+  lens model: 6
+  Little Red Dot: 8
+  high-redshift compact AGN: 8
+  Rubin Observatory: 7
+  LSST: 7
+  DESI: 6
+
+keyword_aliases:
+  active galactic nucleus: [active galactic nuclei, AGN]
+  damped random walk: [DRW, Ornstein-Uhlenbeck]
+  alpha_OX: [alpha ox, alphaox, optical-to-X-ray spectral slope]
+  changing-look AGN: [changing look quasar, changing-look quasar]
+  extreme variability quasar: [EVQ, extreme variability quasars]
+  continuum lag: [continuum reverberation, interband lag, inter-band lag]
+  intermediate-mass black hole: [IMBH, intermediate mass black hole]
+  black-hole occupation fraction: [black hole occupation fraction, BH occupation fraction]
+  self-interacting dark matter: [SIDM]
+  Little Red Dot: [Little Red Dots, LRD]
+  Rubin Observatory: [Vera C. Rubin Observatory, Legacy Survey of Space and Time]
+
+self_match:
+  - "Burke, Colin J."
+  - "Colin J. Burke"
+  - "Burke, C. J."
+
+research_authors: []
+colleagues:
+  people: []
+  institutions: []
+
+digest_mode: "highlights"
+recipient_view_mode: "deep_read"
+days_back: 4
+max_papers: 12
+min_score: 6
+discovery_candidates: 8
+
+openai_model: "gpt-5.6-luna"
+own_api_key: true
+enable_vertex_gemini: false
+
+schedule: "weekdays"
+send_hour_utc: 13
+
+institution: ""
+department: ""
+tagline: ""
+
+smtp_server: "smtp.gmail.com"
+smtp_port: 587
+
+github_repo: "burke86/arxiv-digest"

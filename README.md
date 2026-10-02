@@ -59,14 +59,15 @@ Go to your fork → **Settings → Secrets and variables → Actions → New rep
 | Secret name | What to put there | Required? |
 |---|---|---|
 | `RECIPIENT_EMAIL` | Your email address | Yes |
+| `OPENAI_API_KEY` | Your OpenAI API key for relevance scoring and structured summaries | Recommended |
 | `DIGEST_RELAY_TOKEN` | If you got an access code from a colleague: enter it in the setup wizard's Access Code button — the token appears automatically. No access code? Skip this row and use Option B (your own email) instead. | Option A |
 | `SMTP_USER` + `SMTP_PASSWORD` | Your email address + an app password (a special one-time password your email provider generates so you don't expose your real password). **Gmail users:** You need 2-Step Verification enabled first — [enable it here](https://myaccount.google.com/signinoptions/two-step-verification). Then [generate an app password](https://myaccount.google.com/apppasswords). **Outlook users:** also add `smtp_server: "smtp.office365.com"` to your config.yaml. | Option B |
-| `GEMINI_API_KEY` | A free API key (a password that lets the digest use Google's AI on your behalf) from [aistudio.google.com](https://aistudio.google.com/apikey) — optional, improves scoring | Optional |
-| `ANTHROPIC_API_KEY` | A paid API key for Claude — optional, used if you prefer it over Gemini | Optional |
+| `GEMINI_API_KEY` | Optional upstream-compatible Gemini fallback | Optional |
+| `ANTHROPIC_API_KEY` | Optional upstream-compatible Claude fallback | Optional |
 
 Finally, go to the **Actions** tab in your fork, enable workflows when prompted, then click **arXiv Digest → Run workflow** to send your first digest. After that, it runs automatically on the schedule you set.
 
-> **That's it.** *Default schedule: Mon/Wed/Fri at 9am Danish time.*
+> **That's it.** *This fork runs weekdays at 13:00 UTC (about 8 AM Eastern standard time / 9 AM Eastern daylight time). GitHub cron does not adjust for DST.*
 
 <details>
 <summary>Something not working?</summary>
@@ -99,8 +100,8 @@ If AI is unavailable, the system cascades automatically through fallback tiers:
 
 | Tier | Provider | When it's used |
 |------|----------|----------------|
-| 1 | Claude (Anthropic) | If you add `ANTHROPIC_API_KEY` |
-| 2 | Gemini 2.0 Flash (Vertex AI / GCP) | If `google-genai` is installed and ADC is configured |
+| 1 | OpenAI | If you add `OPENAI_API_KEY` |
+| 2 | Claude / Gemini | If you retain and configure an upstream provider |
 | 3 | Keywords only | Always — no key needed |
 
 If one tier fails, the next takes over. You always get a digest. The AI keys are entirely optional — keyword scoring works well on its own, especially once you tune your keyword weights.
@@ -122,7 +123,7 @@ See [`config.example.yaml`](config.example.yaml) for all options with inline com
 | `recipient_view_mode` | `deep_read` (full cards with context) or `5_min_skim` (top 3 one-liners) |
 | `self_match` | Your name as it appears on arXiv — triggers a celebration section when you publish |
 
-To change the schedule, edit the cron line in [`.github/workflows/digest.yml`](.github/workflows/digest.yml). The default is Mon/Wed/Fri at 9am Danish time.
+To change the schedule, edit the cron line in [`.github/workflows/digest.yml`](.github/workflows/digest.yml). This fork runs every weekday at 13:00 UTC; GitHub cron does not adjust for daylight saving time.
 
 ---
 
@@ -131,7 +132,7 @@ To change the schedule, edit the cron line in [`.github/workflows/digest.yml`](.
 <details>
 <summary>Do I need an API key?</summary>
 
-No. An API key is a password that lets your digest talk to an AI service (Google or Anthropic) to rank papers more intelligently. Keyword scoring works fine without one. If you want smarter ranking later, get a free key from [Google AI Studio](https://aistudio.google.com/apikey) or a paid key from [Anthropic Console](https://console.anthropic.com/), and add it as a repository secret.
+No. Keyword scoring works without an AI key. For semantic ranking and concise scientific summaries, add an OpenAI API key as the `OPENAI_API_KEY` repository secret.
 
 </details>
 
@@ -166,7 +167,7 @@ On the [setup wizard](https://arxiv-digest-production-93ba.up.railway.app), clic
 
 The setup wizard lets you pick Mon/Wed/Fri, every weekday, or weekly. That choice goes into your `config.yaml`.
 
-The *actual* schedule is controlled by a timer in `.github/workflows/digest.yml` (the `cron:` line). The default runs Mon/Wed/Fri at 07:00 UTC (~09:00 Danish time). If you want a different schedule, edit that line in your fork — [crontab.guru](https://crontab.guru) is a friendly tool for building the right expression. Or just trigger a manual run any time: your repo → Actions → arXiv Digest → Run workflow.
+The *actual* schedule is controlled by `.github/workflows/digest.yml`. This fork runs weekdays at 13:00 UTC, approximately 8 AM US Eastern in standard time and 9 AM during daylight time. GitHub cron schedules use UTC and do not automatically adjust for DST. Trigger a manual run any time: your repo → Actions → arXiv Digest → Run workflow.
 
 </details>
 

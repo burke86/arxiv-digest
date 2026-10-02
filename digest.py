@@ -1,6 +1,6 @@
 """
 arXiv Digest — Personalised paper curation engine.
-Fetches new arXiv papers, scores them with AI (Claude → keyword fallback),
+Fetches new arXiv papers, scores them with AI (OpenAI → provider fallbacks → keywords),
 and sends a beautiful HTML digest via email.
 
 Configuration lives in config.yaml — edit that file to update keywords, colleagues, etc.
@@ -32,8 +32,15 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import BaseModel, Field
 
 DEFAULT_SETUP_URL = "https://arxiv-digest-production-93ba.up.railway.app"
+
+try:
+    from openai import OpenAI
+    HAS_OPENAI = True
+except ImportError:
+    HAS_OPENAI = False
 
 try:
     import anthropic
@@ -103,6 +110,8 @@ def _apply_defaults(cfg: dict[str, Any]) -> None:
     cfg.setdefault("keyword_aliases", {})  # optional keyword -> [similar phrases]
     cfg.setdefault("own_api_key", False)  # set True when user adds their own AI key
     cfg.setdefault("allow_feedback_for_students", False)  # mirror votes to central store
+    cfg.setdefault("openai_model", "gpt-5.6-luna")
+    cfg.setdefault("discovery_candidates", 0)
 
     # ── Existing fields with defaults ──
     cfg.setdefault("categories", ["astro-ph.EP", "astro-ph.SR", "astro-ph.GA"])
@@ -1026,13 +1035,25 @@ def fetch_all_papers(config: dict[str, Any]) -> list[dict[str, Any]]:
     return merged
 
 
-def pre_filter(papers: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Keep papers that match keywords or have known authors."""
+def pre_filter(papers: list[dict[str, Any]], config: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """Prioritise keyword/author matches, with an optional discovery slice."""
     filtered = [p for p in papers if p["keyword_hits"] > 0 or p["known_authors"] or p.get("feedback_bias", 0) > 0]
     filtered.sort(key=lambda p: (len(p["known_authors"]) * 15 + p["keyword_hits"] + p.get("feedback_bias", 0) * 8), reverse=True)
     if filtered:
-        print(f"   {len(filtered)} matched keywords/authors (sending top 30 to AI)")
-        return filtered[:30]
+        discovery_count = max(0, min(int((config or {}).get("discovery_candidates", 0)), 15))
+        selected = filtered[:max(0, 30 - discovery_count)]
+        if discovery_count:
+            matched_ids = {p["id"] for p in filtered}
+            discovery = sorted(
+                (p for p in papers if p["id"] not in matched_ids and p.get("category", "").startswith("astro-ph.")),
+                key=lambda p: p.get("published", ""),
+                reverse=True,
+            )[:discovery_count]
+            selected.extend(discovery)
+            print(f"   {len(filtered)} matched keywords/authors; added {len(discovery)} discovery candidate(s) (sending {len(selected)} to AI)")
+        else:
+            print(f"   {len(filtered)} matched keywords/authors (sending top 30 to AI)")
+        return selected
     # Discovery mode: no keyword/author matches — prefer astro-ph papers
     print("  No keyword matches — discovery mode: showing newest papers")
     astro = [p for p in papers if p.get("category", "").startswith("astro-ph.")]
@@ -1055,11 +1076,11 @@ def extract_own_papers(papers: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 # ─────────────────────────────────────────────────────────────
-#  AI ANALYSIS — Claude → Keyword Fallback
+#  AI ANALYSIS — OpenAI → upstream providers → Keyword Fallback
 # ─────────────────────────────────────────────────────────────
 
 def _build_scoring_prompt(paper: dict[str, Any], config: dict[str, Any]) -> str:
-    """Build the scoring prompt for Claude."""
+    """Build the provider-neutral scoring prompt."""
     # Sanitize researcher_name to prevent f-string/JSON corruption
     researcher_name = config["researcher_name"].replace('"', "'").replace("{", "").replace("}", "")
     research_context = config.get("research_context", "").strip()
@@ -1109,6 +1130,21 @@ Score generously for this researcher's interests:
 """
 
 
+class PaperAnalysis(BaseModel):
+    """Structured analysis contract consumed by the existing email renderer."""
+
+    relevance_score: int = Field(ge=1, le=10)
+    plain_summary: str
+    why_interesting: str
+    emoji: str
+    highlight_phrase: str
+    kw_tags: list[str]
+    method_tags: list[str]
+    is_new_catalog: bool
+    cite_worthy: bool
+    new_result: str | None
+
+
 def _default_analysis(paper: dict[str, Any]) -> dict[str, Any]:
     """Fallback analysis fields when AI scoring fails."""
     # keyword_hits is normalized 0-100, map to 1-10 scale
@@ -1130,6 +1166,46 @@ def _default_analysis(paper: dict[str, Any]) -> dict[str, Any]:
         "kw_tags": [], "method_tags": [],
         "is_new_catalog": False, "cite_worthy": False, "new_result": None,
     }
+
+
+def _analyse_with_openai(papers: list[dict[str, Any]], config: dict[str, Any], api_key: str) -> tuple[list[dict[str, Any]] | None, str | None]:
+    """Score papers with the Responses API and schema-constrained output."""
+    client = OpenAI(api_key=api_key)
+    analysed = []
+    consecutive_failures = 0
+
+    def process_paper(i: int, paper: dict[str, Any]) -> tuple[dict[str, Any], Exception | None]:
+        print(f"  Analysing {i+1}/{len(papers)}: {paper['title'][:60]}...")
+        try:
+            response = client.responses.parse(
+                model=config.get("openai_model", "gpt-5.6-luna"),
+                input=[{"role": "user", "content": _build_scoring_prompt(paper, config)}],
+                text_format=PaperAnalysis,
+                store=False,
+            )
+            analysis = response.output_parsed
+            if analysis is None:
+                raise ValueError("OpenAI returned no parsed analysis")
+            paper.update(analysis.model_dump())
+            print(f"    → score: {analysis.relevance_score}")
+            return paper, None
+        except Exception as exc:
+            print(f"    Error: {exc}")
+            paper.update(_default_analysis(paper))
+            return paper, exc
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(process_paper, i, paper) for i, paper in enumerate(papers)]
+        for future in futures:
+            paper, error = future.result()
+            analysed.append(paper)
+            consecutive_failures = consecutive_failures + 1 if error else 0
+            if consecutive_failures >= 3:
+                print("  ⚠️  3 consecutive OpenAI failures — switching to fallback...")
+                executor.shutdown(wait=False, cancel_futures=True)
+                return None, "openai_errors"
+
+    return _filter_and_sort(analysed, config), None
 
 
 def _analyse_with_claude(papers: list[dict[str, Any]], config: dict[str, Any], api_key: str) -> tuple[list[dict[str, Any]] | None, str | None]:
@@ -1334,14 +1410,22 @@ def _filter_and_sort(analysed: list[dict[str, Any]], config: dict[str, Any]) -> 
 
 
 def analyse_papers(papers: list[dict[str, Any]], config: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
-    """Dispatch to Claude → Vertex AI Gemini → Gemini API → keyword fallback.
+    """Dispatch to OpenAI → Claude → Gemini → keyword fallback.
     Returns (scored_papers, scoring_method) where scoring_method is one of:
-    'claude', 'vertex_gemini', 'gemini_api', 'keywords', or 'keywords_fallback'."""
+    'openai', 'claude', 'vertex_gemini', 'gemini_api', 'keywords', or 'keywords_fallback'."""
     if not papers:
         return [], "none"
 
+    api_key_openai = os.environ.get("OPENAI_API_KEY", "").strip()
     api_key_claude = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     api_key_gemini = os.environ.get("GEMINI_API_KEY", "").strip()
+
+    if api_key_openai and HAS_OPENAI:
+        print("  Using OpenAI for analysis...")
+        result, error = _analyse_with_openai(copy.deepcopy(papers), config, api_key_openai)
+        if error is None:
+            return result, "openai"
+        print("  OpenAI unavailable — trying configured provider fallbacks...")
 
     if api_key_claude and HAS_ANTHROPIC:
         print("  Using Claude for analysis...")
@@ -1350,7 +1434,7 @@ def analyse_papers(papers: list[dict[str, Any]], config: dict[str, Any]) -> tupl
             return result, "claude"
         print("  Claude unavailable — falling back to Vertex AI Gemini...")
 
-    if HAS_VERTEX_GEMINI:
+    if HAS_VERTEX_GEMINI and config.get("enable_vertex_gemini", True):
         print("  Using Vertex AI Gemini for analysis...")
         result, error = _analyse_with_vertex_gemini(copy.deepcopy(papers), config)
         if error is None:
@@ -1876,6 +1960,13 @@ def _render_skim_card(p: dict[str, Any], github_repo: str) -> str:
 
 def _render_scoring_notice(scoring_method: str) -> str:
     """Return the scoring-method notice banner HTML (or empty string)."""
+    if scoring_method == "openai":
+        return f"""
+  <tr><td style="padding:12px 44px">
+    <div style="background:{PINE_WASH};border:1px solid {CARD_BORDER};border-radius:6px;padding:14px 18px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:{WARM_GREY};text-align:center">
+      &#x1F916; Papers scored and summarised by <strong>OpenAI</strong> using structured outputs.
+    </div>
+  </td></tr>"""
     if scoring_method in ("vertex_gemini", "gemini_api"):
         label = "Vertex AI / GCP" if scoring_method == "vertex_gemini" else "Google AI"
         return f"""
@@ -1888,14 +1979,14 @@ def _render_scoring_notice(scoring_method: str) -> str:
         return f"""
   <tr><td style="padding:12px 44px">
     <div style="background:{GOLD_WASH};border:1px solid {GOLD_LIGHT};border-radius:6px;padding:14px 18px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:{UMBER};text-align:center">
-      &#x26A0;&#xFE0F; <strong>AI scoring unavailable this run</strong> — your API key may be out of credits or the API was unreachable. Papers were scored by keyword matching only, so relevance scores may be less accurate. Top up at <a href="https://console.anthropic.com" style="color:{PINE}">console.anthropic.com</a>.
+      &#x26A0;&#xFE0F; <strong>AI scoring unavailable this run</strong> — an API key may be out of credits or the provider was unreachable. Papers were scored by keyword matching only, so relevance scores may be less accurate.
     </div>
   </td></tr>"""
     elif scoring_method == "keywords":
         return f"""
     <tr><td style="padding:12px 44px">
         <div style="background:{PINE_WASH};border:1px solid {CARD_BORDER};border-radius:6px;padding:14px 18px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:{WARM_GREY};text-align:center">
-            &#x1F4CA; Papers scored by keyword matching (no AI key configured). For smarter scoring, add an <code>ANTHROPIC_API_KEY</code> to your repo secrets — $5 of credits will last hundreds of digests.
+            &#x1F4CA; Papers scored by keyword matching (no AI key configured). For smarter scoring, add <code>OPENAI_API_KEY</code> to your repository secrets.
         </div>
     </td></tr>"""
     return ""
@@ -1949,7 +2040,7 @@ def _render_own_key_nudge(config: dict[str, Any], scoring_method: str) -> str:
     """Gentle nudge to get your own API key if using the shared community key."""
     if config.get("own_api_key"):
         return ""
-    if scoring_method not in {"claude", "vertex_gemini", "gemini_api", "keywords_fallback"}:
+    if scoring_method not in {"openai", "claude", "vertex_gemini", "gemini_api", "keywords_fallback"}:
         return ""
     github_repo = config.get("github_repo", "")
     secrets_url = f"https://github.com/{github_repo}/settings/secrets/actions" if github_repo else ""
@@ -1957,7 +2048,7 @@ def _render_own_key_nudge(config: dict[str, Any], scoring_method: str) -> str:
     return f"""
   <tr><td style="padding:8px 44px 0">
     <div style="background:{PINE_WASH};border:1px solid {CARD_BORDER};border-radius:6px;padding:12px 18px;font-family:'IBM Plex Sans',sans-serif;font-size:11px;color:{WARM_GREY};text-align:center">
-      &#x1F511; You are using a shared AI key — it works, but may be slower when many people run their digests at the same time. Add your own <code>ANTHROPIC_API_KEY</code> for faster, more reliable scoring.{secrets_link}
+      &#x1F511; Add your own AI provider key in repository secrets for reliable scoring.{secrets_link}
     </div>
   </td></tr>"""
 
@@ -1996,6 +2087,7 @@ def _render_student_footer(config: dict[str, Any], scoring_method: str) -> str:
     </div>""" if service_links else ""
 
     scoring_labels = {
+        "openai": "OpenAI",
         "claude": "Claude Haiku (Anthropic)",
         "vertex_gemini": "Gemini 2.0 Flash (Vertex AI / GCP)",
         "gemini_api": "Gemini 2.0 Flash (Google AI)",
@@ -2068,6 +2160,7 @@ def _render_footer(config: dict[str, Any], scoring_method: str) -> str:
 
     # ── Scoring label ──
     scoring_labels = {
+        "openai": "OpenAI",
         "claude": "Claude Haiku (Anthropic)",
         "vertex_gemini": "Gemini 2.0 Flash (Vertex AI / GCP)",
         "gemini_api": "Gemini 2.0 Flash (Google AI)",
@@ -2519,7 +2612,7 @@ def main() -> None:
         print(f"   🎉 Found {len(colleague_papers)} colleague paper(s): {', '.join(names)}")
 
     print("\n🔍 Pre-filtering...")
-    candidates = pre_filter(papers)
+    candidates = pre_filter(papers, config)
 
     print("\n🤖 Analysing papers...")
     final_papers, scoring_method = analyse_papers(candidates, config)
