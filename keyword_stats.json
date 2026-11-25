@@ -365,183 +365,183 @@
     "runs_checked": 2
   },
   "quasar": {
-    "total_hits": 198,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 205,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "active galactic nucleus": {
-    "total_hits": 1795,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 1842,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "AGN variability": {
     "total_hits": 45,
     "last_hit": "2026-11-20",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "changing-look AGN": {
     "total_hits": 2,
     "last_hit": "2026-11-12",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "extreme variability quasar": {
     "total_hits": 3,
     "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "structure function": {
-    "total_hits": 188,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 194,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "damped random walk": {
     "total_hits": 8,
     "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "stochastic variability": {
     "total_hits": 11,
     "last_hit": "2026-11-13",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "accretion disk": {
-    "total_hits": 188,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 190,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "disk-corona coupling": {
     "total_hits": 0,
     "last_hit": null,
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "Eddington ratio": {
-    "total_hits": 50,
-    "last_hit": "2026-11-20",
-    "runs_checked": 36
+    "total_hits": 51,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "alpha_OX": {
-    "total_hits": 23,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 26,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "photon index": {
     "total_hits": 47,
     "last_hit": "2026-11-19",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "reverberation mapping": {
-    "total_hits": 31,
-    "last_hit": "2026-11-13",
-    "runs_checked": 36
+    "total_hits": 32,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "continuum lag": {
     "total_hits": 36,
     "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "inter-band lag": {
     "total_hits": 11,
     "last_hit": "2026-11-13",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "quasar cosmology": {
-    "total_hits": 12,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 13,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "Hubble diagram": {
-    "total_hits": 20,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 21,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "Hubble constant": {
-    "total_hits": 55,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 56,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "dark energy": {
-    "total_hits": 377,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 388,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "w0-wa": {
     "total_hits": 0,
     "last_hit": null,
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "AGN host galaxy": {
-    "total_hits": 77,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 79,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "selection effects": {
-    "total_hits": 92,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 94,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "intermediate-mass black hole": {
     "total_hits": 45,
     "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "black-hole occupation fraction": {
     "total_hits": 7,
     "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "strong gravitational lensing": {
-    "total_hits": 58,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 60,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "galaxy cluster": {
-    "total_hits": 444,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 456,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "cluster substructure": {
     "total_hits": 35,
     "last_hit": "2026-11-20",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "subhalo mass function": {
-    "total_hits": 25,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 26,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "self-interacting dark matter": {
-    "total_hits": 23,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 24,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "lens model": {
-    "total_hits": 98,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 101,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "Little Red Dot": {
-    "total_hits": 64,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 65,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "high-redshift compact AGN": {
     "total_hits": 4,
     "last_hit": "2026-10-02",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "Rubin Observatory": {
     "total_hits": 95,
     "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "runs_checked": 37
   },
   "LSST": {
-    "total_hits": 101,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 105,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   },
   "DESI": {
-    "total_hits": 650,
-    "last_hit": "2026-11-24",
-    "runs_checked": 36
+    "total_hits": 666,
+    "last_hit": "2026-11-25",
+    "runs_checked": 37
   }
 }
